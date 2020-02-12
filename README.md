@@ -160,6 +160,19 @@ handleSubmit = e => {
 
 
 
+### git相关操作复习
+- 无论origin有多少分支,提交了多少分支, 只需要git pull就可以把远程的所有分支pull下来
+- 然后本地在git checkout xxx分支就可以切换了
+- 不要自己在本地创建分支, 比如, git checkout -b redux, 不要这样创建一个本地分支, 然后再git pull,这是错误的,会导致冲突
+- 比如远程有master, dev, redux分支, 正确做法
+  - git clone 一个项目, clone下来的是master分支
+  - git pull
+  - git checkout dev  切换到指定的分支
+  - git pull origin redux   // 拉取指定分支的增量代码, 协同开发者更新了一些就更新
+```js
+git clone 
+```
+
 
 
 
