@@ -1,0 +1,59 @@
+// 设置整个页面的宽高
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+// react应用的根,也要设置宽高
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+#login {
+  width: 100%;
+  height: 100%;
+  background-image: url(../images/background.jpg);
+  background-repeat: no-repeat; // 平铺不重复
+  background-size: cover; // 覆盖整个页面
+
+  .login-header {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    width: 100%;
+    height: 80px;
+
+    img {
+      width: 90px;
+      height: 30px;
+      margin: 0 10px;
+    }
+
+    h1 {
+      color: #000;
+      font-size: 30px;
+      margin-bottom: 0px;
+    }
+  }
+
+  .login-content {
+    background-color: #fff;
+    width: 400px;
+    height: 300px;
+    margin: 0 auto;
+    margin-top: 50px;
+    padding: 20px;
+
+    h1 {
+      font-size: 26px;
+      text-align: center;
+      margin-bottom: 0px;
+    }
+
+    .login-form-button {
+      width: 100%;
+    }
+  }
+}

@@ -1,68 +1,166 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+### antd 配置
+```
+yarn add react-app-rewired customize-cra babel-plugin-import less less-loader
+```
+- package.json 修改script
+- 新建config-overrides.js
 
-## Available Scripts
+### 项目划分路由
+- 一级路由的划分
 
-In the project directory, you can run:
+### antd自定义了一些样式
+- 会给h1标签增加margin-bottom: 0.5rem
+- h1和img在一行显示会错位
 
-### `yarn start`
+### FeHelper
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+### 代码格式化
+> https://www.jianshu.com/p/fee707c595fc
+1. Prettier - Code formatter
+2. EditorConfig for VS Code
+需添加文件配置
+以下文件需要添加到项目根目录
+.editorconfig
+```
+# http://editorconfig.org
+root = true
 
-### `yarn test`
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+[*.md]
+trim_trailing_whitespace = false
 
-### `yarn build`
+[Makefile]
+indent_style = tab
+```
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+.prettierignore
+```
+**/*.md
+**/*.svg
+package.json
+.umi
+.umi-production
+```
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+.prettierrc
+```
+{
+  "singleQuote": false,
+  "trailingComma": "es5",
+  "printWidth": 100,
+  "overrides": [
+    {
+      "files": ".prettierrc",
+      "options": { "parser": "json" }
+    }
+  ]
+}
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```
 
-### `yarn eject`
+- 需添加依赖
+> cnpm install --save-dev --save-exact prettier
+- 使用方法
+打开需要格式化的文件，使用如下快捷键
+windows: CTRL + ALT + F
+mac: SHIFT + ALT + F
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### 字体 Fira Code
+- 下载字体
+https://github.com/tonsky/FiraCode
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- 配置setting.json
+```json
+"editor.fontFamily": "'Fira Code',Menlo, Monaco, 'Courier New', monospace",
+"editor.fontLigatures": true,
+```
+- 关联js为jsx
+```json
+"files.associations": {
+      "*.js": "javascriptreact"
+  },
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### antd的表单校验
+- 声明式校验
+```js
+<Form.Item>
+  {getFieldDecorator("username", {
+    rules: [
+      { required: true, message: "Please input your Password!" },
+      { min: 4, message: "最小长度4位" },
+      { max: 9, message: "最大长度9位" },
+      { pattern: /^\w+$/, message: "英文字符下划线" },
+    ]
+  })(
+    <Input
+      prefix={<Icon type="user" style={{ color: "rgba(0,0,0,.25)" }} />}
+      placeholder="Username"
+    />
+  )}
+</Form.Item>
+```
+- 自定义校验
+```js
 
-## Learn More
+pwdValidator = (rule, value, callback) => {
+    if (!value) {
+      callback('密码不能为空')
+    } else if (value.length < 4) {
+      callback('密码不能小于4')
+    } else if (value.length > 9) {
+      callback('密码不能大于9')
+    } else if (!(/^\w+$/).test(value)) {
+      callback('密码必须是字母数字下划线')
+    }
+    callback()
+}
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+<Form.Item>
+  {getFieldDecorator("password", {
+    rules: [
+      { validator: this.pwdValidator}
+    ],
+  })(
+    <Input
+      prefix={<Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }} />}
+      type="password"
+      placeholder="密码"
+    />
+  )}
+</Form.Item>
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- 表单的统一验证
+```js
+handleSubmit = e => {
+  e.preventDefault()
+  this.props.form.validateFields((err, values) => {
+    if (!err) {
+      console.log(values)
+    }
+  })
+}
 
-### Code Splitting
+<Button type="primary" 
+  htmlType="submit" 
+  className="login-form-button">
+  登录
+</Button>
+```
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
 
-### Analyzing the Bundle Size
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
 
-### Making a Progressive Web App
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
 
-### Advanced Configuration
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `yarn build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
