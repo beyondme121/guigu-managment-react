@@ -1,15 +1,13 @@
-
-let initState = 900
+import { INCREMENT, DECREMENT} from './action-types'
+let initState = 0
 export default function (preState = initState, action) {
   const { type, data } = action
   let newState
   switch (type) {
-    case 'increment':
-      console.log('----')
+    case INCREMENT:
       newState = preState + data
-      console.log(newState)
       return newState
-    case 'decrement': 
+    case DECREMENT: 
       newState = preState - data
       return newState
     default:

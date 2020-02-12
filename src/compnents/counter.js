@@ -1,37 +1,41 @@
 import React, { Component } from "react";
-
+import { increment, decrement } from '../redux/action-creators'
 export default class Counter extends Component {
   constructor(props) {
     super(props);
     this.selectRef = React.createRef();
   }
   increment = () => {
-    this.props.store.dispatch({
-      type: "increment",
-      data: this.selectRef.current.value * 1
-    });
+    // this.props.store.dispatch({
+    //   type: "increment",
+    //   data: this.selectRef.current.value * 1
+    // });
+    this.props.store.dispatch(increment(this.selectRef.current.value))
   };
   decrement = () => {
-    this.props.store.dispatch({
-      type: "decrement",
-      data: this.selectRef.current.value * 1
-    });
+    // this.props.store.dispatch({
+    //   type: "decrement",
+    //   data: this.selectRef.current.value * 1
+    // });
+    this.props.store.dispatch(decrement(this.selectRef.current.value))
   };
   incrementIfOdd = () => {
     let preState = this.props.store.getState();
     if (preState % 2 === 1) {
-      this.props.store.dispatch({
-        type: "increment",
-        data: this.selectRef.current.value * 1
-      });
+      // this.props.store.dispatch({
+      //   type: "increment",
+      //   data: this.selectRef.current.value * 1
+      // });
+      this.props.store.dispatch(increment(this.selectRef.current.value))
     }
   };
   incrementAsync = () => {
     setTimeout(() => {
-      this.props.store.dispatch({
-        type: "increment",
-        data: this.selectRef.current.value * 1
-      });
+      // this.props.store.dispatch({
+      //   type: "increment",
+      //   data: this.selectRef.current.value * 1
+      // });
+      this.props.store.dispatch(increment(this.selectRef.current.value))
     }, 500);
   };
 
