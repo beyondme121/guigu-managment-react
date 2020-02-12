@@ -3,7 +3,7 @@ import Counter from './compnents/counter'
 export default class App extends Component {
   render () {
     return (
-      <Counter store={this.props.store}/>
+      <Counter />
     )
   }
 }
