@@ -1,7 +1,11 @@
 // 容器组件, 将redux中的状态以及行为操作通过props的形式传递给UI组件
 
 import { connect } from "react-redux";
-import { increment, decrement, incrementAsync } from "../redux/action-creators";
+import {
+  increment,
+  decrement,
+  incrementAsync
+} from "../redux/actions/counter-action";
 import counter from "../compnents/counter";
 
 // function mapStateToProps (state) {
@@ -23,8 +27,6 @@ import counter from "../compnents/counter";
 // action通过props的方式传递给UI组件,那么{increment: ...}就是props
 // 如果想直接传递increment,那是不行的,直接就会调用
 
-
-
 /**
  * connect函数中第二个参数进行判断
  * 1. 如果是一个对象, 就自动加上上面的代码, 遍历对象, 然后给每个对象添加dispatch
@@ -37,7 +39,7 @@ import counter from "../compnents/counter";
 
 // export default connect(mapStateToProps, mapDispatchToProps)(counter);
 
-export default connect(state => ({ count: state }), {
+export default connect(state => ({ count: state.count, users: state.users }), {
   increment,
   decrement,
   incrementAsync

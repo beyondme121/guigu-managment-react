@@ -1,4 +1,4 @@
-import { INCREMENT, DECREMENT} from './action-types'
+import { INCREMENT, DECREMENT} from '../action-types'
 let initState = 0
 export default function (preState = initState, action) {
   const { type, data } = action

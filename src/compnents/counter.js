@@ -74,6 +74,11 @@ export default class Counter extends Component {
         <button onClick={this.decrement}>-</button>
         <button onClick={this.incrementIfOdd}>add if odd</button>
         <button onClick={this.incrementAsync}>add async</button>
+        <div>
+          <span>
+            用户列表的数量是: {this.props.users.length}
+          </span>
+        </div>
       </div>
     );
   }

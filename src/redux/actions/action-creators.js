@@ -1,4 +1,4 @@
-import { INCREMENT, DECREMENT } from "./action-types";
+import { INCREMENT, DECREMENT } from "../action-types";
 // 同步的action, 调用action直接就进行处理状态
 export const increment = value => ({ type: INCREMENT, data: value });
 export const decrement = value => ({ type: DECREMENT, data: value });

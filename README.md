@@ -198,3 +198,4 @@ export const incrementAsync = (value, time) => {
 ```
 
 ### Redux模块化
+- reducer, actionCreator分别创建不同的文件用于处理不同的业务
