@@ -173,4 +173,28 @@ git clone
 
 
 
+### 不同action和异步action
 
+
+### 异步redux
+> 所有的异步操作都在action中完成, 比如定时器,ajax请求, 请求完成之后触发一个同步的action去更新状态
+```js
+import thunk from 'redux-thunk'
+export default createStore(reducer, applyMiddleware(thunk))
+
+
+// 同步action
+export const increment = value => ({type: INCREMENT, data: value })
+// 所有的异步操作都在action中完成, 比如定时器,ajax请求, 请求完成之后触发一个同步的action去更新状态
+// 希望过1秒之后incrment
+// 曲线救国: 异步action,返回的是一个函数,函数内部执行异步的操作,异步执行完成之后执行同步action
+export const incrementAsync = (value, time) => {
+  return dispatch => {
+    setTimeout(() => {
+      dispatch(increment(value))
+    }, time);
+  }
+}
+```
+
+### Redux模块化
