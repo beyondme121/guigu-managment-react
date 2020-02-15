@@ -1,6 +1,9 @@
 import React, { Component } from "react";
+import { connect } from 'react-redux'
+import { Redirect } from 'react-router-dom'
 import { Form, Icon, Input, Button, message } from "antd";
 import { reqLogin } from '../../api'
+import { saveUserinfo } from '../../redux/actions/login-action'
 
 import "./css/login.less";
 import logo from "../../assets/images/ABB_Logo.png";
@@ -8,21 +11,6 @@ import logo from "../../assets/images/ABB_Logo.png";
 const { Item } = Form;
 class Login extends Component {
   // 点击登录提交登录请求
-  // handleSubmit = e => {
-  //   e.preventDefault();
-  //   this.props.form.validateFields((err, values) => {
-  //     if (!err) {
-  //       myAxios.post("/users/login", values).then(
-  //         res => {
-  //           console.log(res);
-  //         },
-  //         error => {
-  //           console.log("error: ", error);
-  //         }
-  //       );
-  //     }
-  //   });
-  // };
 
   handleSubmit = e => {
     e.preventDefault();
@@ -36,6 +24,7 @@ class Login extends Component {
         if (status === 0) {
           message.success('登录成功', 1)
           this.props.history.replace('/admin')
+          this.props.saveUserinfo(data)
         } else {
           message.warning(msg, 1)
         }
@@ -55,8 +44,18 @@ class Login extends Component {
     }
     callback();
   };
+
   render() {
+    // 获取用户是否登陆
+    const { isLogin } = this.props.userinfo
     const { getFieldDecorator } = this.props.form;
+
+    // 判断登陆状态, 已经登陆跳转到admin,就不再访问登陆
+    if (isLogin) {
+      // this.props.history.replace('/admin')
+      return <Redirect to="/admin"/>
+    }
+
     return (
       <div id="login">
         <div className="login-header">
@@ -106,4 +105,8 @@ class Login extends Component {
   }
 }
 
-export default Form.create()(Login);
+// 映射redux的状态以及修改状态的行为action
+export default connect(
+  state => ({ userinfo: state.userinfo }),
+  { saveUserinfo }
+)(Form.create()(Login))

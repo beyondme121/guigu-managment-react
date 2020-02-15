@@ -345,3 +345,230 @@ if (status === 0) {
   message.warning(msg, 1)
 }
 ```
+
+### 登录成功将用户状态信息保存到redux中
+
+1. 容器组件中调用redux的action
+2. 包装UI组件
+
+3. login登录组件只用到了redux中的行为action, 业务逻辑不需要获取用户状态信息,可以不传递参数
+```js
+import { connect } from 'react-redux'
+import { saveUserinfo } from '../../redux/actions/login-action'
+// 映射redux的状态以及修改状态的行为action
+export default connect(
+  // state => ({ userInfo: state.userinfo }),
+  state => ({})   // 可以不传递状态
+  { saveUserinfo }
+)(Form.create()(Login))
+```
+
+### redux核心代码
+- store.js
+
+```js
+import { createStore, applyMiddleware } from 'redux'
+import thunk from 'redux-thunk'
+import { composeWithDevTools } from 'redux-devtools-extension'
+import reducer from './reducers'
+export default createStore(reducer, composeWithDevTools(applyMiddleware(thunk)))
+```
+
+- action-types.js
+
+```js
+export const SAVE_USER = 'save_user'
+```
+
+- reducers/login-reducer.js
+
+```js
+import { SAVE_USER } from '../action-types.js'
+// 设置初始状态
+let initState = {
+  user: {},
+  token: ''
+}
+// 接受初始状态以及操作action，返回新的状态
+
+export default function (preState = initState, action) {
+  let { type, data } = action
+  let newState
+  swtich(type) {
+    case SAVE_USER:
+      newState = {
+        user: data.user,
+        token: data.token
+      }
+      return newState
+    default:
+      return preState
+  }
+}
+```
+
+- actions/login-action.js
+
+```js
+import { SAVE_USER } from '../action-types.js'
+export const save_userinfo = value => ({ type: SAVE_USER, data: value })
+```
+
+- 登录成功后, Admin组件需要获取redux中保管的user信息
+
+```js
+import React, { Component } from "react";
+import { connect } from 'react-redux'
+class Admin extends Component {
+  render() {
+    return <div>Admin, {this.props.userInfo.user.username}</div>;
+  }
+}
+
+export default connect(
+  state => ({ userInfo: state.userinfo }),
+  {}
+)(Admin)
+
+```
+
+- 新的问题,页面刷新,redux状态消失
+- 刷新页面, redux状态清空, 直接访问 /admin, 可以直接访问
+
+### 维护用户的登录状态
+1. 使用localStorage保存用户的状态, 在那里保存, 在页面中setItem?
+  通常在一次操作中融合多个操作, --> 在修改redux状态时, 调用local, redux中的action
+
+```js
+import { SAVE_USER } from "../action-types";
+
+// 保存用户信息的action
+export const saveUserinfo = value => {
+  let { user, token } = value
+  // 将js对象保存到local中必须转换为json字符串  JSON.stringify(obj)
+  // 
+  localStorage.setItem('user', JSON.stringify(user))
+  localStorage.setItem('token', token)
+  return { type: SAVE_USER, data: value }
+}
+```
+
+### 解决两个问题
+1. 已经登陆, 希望访问登录页, --> 不允许
+2. 未登录, 希望访问管理页面, --> 不允许
+
+- 在登陆login页面中判断如果登陆了跳转到admin
+```js
+render() {
+    // 获取用户是否登陆
+    const { isLogin } = this.props.userinfo
+    // 判断登陆状态, 已经登陆跳转到admin,就不再访问登陆
+    if (isLogin) {
+      // this.props.history.replace('/admin')
+      return <Redirect to="/admin"/>
+    }
+}
+// ...
+// 映射redux的状态以及修改状态的行为action
+export default connect(
+  state => ({ userinfo: state.userinfo }),  // 从redux中获取所有用户数据,包含是否登陆标识
+  { saveUserinfo }
+)(Form.create()(Login))
+```
+
+- admin.js中判断如果未登录,跳转到登录页 判断redux中的用户状态 isLogin
+```js
+import React, { Component } from "react";
+import { connect } from 'react-redux'
+import { Redirect } from 'react-router-dom'
+
+class Admin extends Component {
+  render() {
+    const { isLogin } = this.props.userinfo
+    if (!isLogin) {
+      return <Redirect to="/login" />
+    }
+    return <div style={{fontSize: '26px'}}>
+      Admin, {this.props.userinfo.user.username}
+    </div>;
+  }
+}
+export default connect(
+  state => ({ userinfo: state.userinfo }),
+  {}
+)(Admin)
+```
+
+- 难道每个组件都要从状态中拿出登陆状态,判断一下,再返回组件吗? 使用高阶组件, 传递一个组件, 返回一个经过判断的组件
+
+### 简易版本的推出登陆
+- login-action.js中增加deleteUser的actioncreator, 同时清空local中保存的数据
+- reducers增加 清空redux状态数据
+
+- login-action.js
+```js
+import { SAVE_USER, DELETE_USER } from "../action-types";
+export const deleteUserinfo = () => {
+  localStorage.removeItem('user')
+  localStorage.removeItem('token')
+  return {
+    type: DELETE_USER,
+    data: ''
+  }
+}
+```
+
+- login-reducer.js
+
+```js
+export default function (preState = initState, action) {
+  let { type, data } = action
+  let newState
+  switch (type) {
+    case SAVE_USER:
+      newState = {
+        user: data.user,
+        token: data.token,
+        isLogin: true
+      }
+      return newState
+    // 新增删除用户状态数据
+    case DELETE_USER:
+      return {
+        user: {},
+        token: ''
+      }
+    default:
+      return preState
+  }
+}
+```
+
+- action-types.js
+
+```js
+export const DELETE_USER = 'delete_user'
+```
+
+- 组件中写按钮触发退出登录
+```js
+// 导入action
+export default connect(
+  state => ({ userinfo: state.userinfo }),
+  { deleteUserinfo }
+)(Admin)
+
+
+logout = () => {
+  this.props.deleteUserinfo()
+}
+
+<div>
+  <button onClick={this.logout}>退出登陆</button>
+</div>
+
+// 如果未登录, 重定向到login
+if (!isLogin) {
+  return <Redirect to="/login" />
+}
+```

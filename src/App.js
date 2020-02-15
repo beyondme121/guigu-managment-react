@@ -15,3 +15,11 @@ function App() {
 }
 
 export default App;
+
+
+// @annotation
+// class MyClass { }
+
+// function annotation(target) {
+//    target.annotated = true;
+// }
