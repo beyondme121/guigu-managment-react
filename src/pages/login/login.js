@@ -1,33 +1,69 @@
 import React, { Component } from "react";
-import { Form, Icon, Input, Button, Checkbox } from "antd";
+import { connect } from 'react-redux'
+import { Form, Icon, Input, Button, message } from "antd";
+import checklogin from '../check-login/check-login'   // 高阶组件, 装饰器
+import { reqLogin } from '../../api'
+import { saveUserinfo } from '../../redux/actions/login-action'
+
 import "./css/login.less";
 import logo from "../../assets/images/ABB_Logo.png";
+const { Item } = Form;
 
+@connect(
+  // 此处获取状态仅仅为了判断, 在高阶组件中完成功能, 此处没必要引入redux中的state数据
+  // state => ({ userinfo: state.userinfo }),
+  null,
+  { saveUserinfo }
+)
+@Form.create()
+@checklogin
 class Login extends Component {
+  // 点击登录提交登录请求
 
   handleSubmit = e => {
-    e.preventDefault()
-    this.props.form.validateFields((err, values) => {
+    e.preventDefault();
+    this.props.form.validateFields(async (err, values) => {
       if (!err) {
-        console.log(values)
+        // post请求,传递values对象, 通过拦截器转化为url-encoded
+        // 加入后端不支持json格式的处理, 只能通过前端转换为url-encoded
+        // 如果后端支持json, 直接传递json格式的数据即可
+        // const result = await myAxios.post('/users/login', values)
+        const { status, data, msg } = await reqLogin(values)
+        if (status === 0) {
+          message.success('登录成功', 1)
+          this.props.history.replace('/admin')
+          this.props.saveUserinfo(data)
+        } else {
+          message.warning(msg, 1)
+        }
       }
-    })
-  }
+    });
+  };
 
   pwdValidator = (rule, value, callback) => {
     if (!value) {
-      callback('密码不能为空')
+      callback("密码不能为空");
     } else if (value.length < 4) {
-      callback('密码不能小于4')
+      callback("密码不能小于4");
     } else if (value.length > 9) {
-      callback('密码不能大于9')
-    } else if (!(/^\w+$/).test(value)) {
-      callback('密码必须是字母数字下划线')
+      callback("密码不能大于9");
+    } else if (!/^\w+$/.test(value)) {
+      callback("密码必须是字母数字下划线");
     }
-    callback()
-  }
+    callback();
+  };
+
   render() {
+    // 获取用户是否登陆
+    // const { isLogin } = this.props.userinfo
     const { getFieldDecorator } = this.props.form;
+
+    // 判断登陆状态, 已经登陆跳转到admin,就不再访问登陆
+    // if (isLogin) {
+    //   // this.props.history.replace('/admin')
+    //   return <Redirect to="/admin"/>
+    // }
+
     return (
       <div id="login">
         <div className="login-header">
@@ -44,7 +80,7 @@ class Login extends Component {
                   { min: 4, message: "最小长度4位" },
                   { max: 9, message: "最大长度9位" },
                   { pattern: /^\w+$/, message: "英文字符下划线" },
-                ]
+                ],
               })(
                 <Input
                   prefix={<Icon type="user" style={{ color: "rgba(0,0,0,.25)" }} />}
@@ -54,9 +90,7 @@ class Login extends Component {
             </Form.Item>
             <Form.Item>
               {getFieldDecorator("password", {
-                rules: [
-                  { validator: this.pwdValidator}
-                ],
+                rules: [{ validator: this.pwdValidator }],
               })(
                 <Input
                   prefix={<Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }} />}
@@ -65,11 +99,13 @@ class Login extends Component {
                 />
               )}
             </Form.Item>
-            <Form.Item>
-              <Button type="primary" htmlType="submit" className="login-form-button">
-                登录
+            <Item>
+              <Button type="primary" className="login-form-button"
+                htmlType="submit"
+              >
+                提交
               </Button>
-            </Form.Item>
+            </Item>
           </Form>
         </div>
       </div>
@@ -77,4 +113,17 @@ class Login extends Component {
   }
 }
 
-export default Form.create()(Login);
+// 映射redux的状态以及修改状态的行为action
+// export default connect(
+//   state => ({ userinfo: state.userinfo }),
+//   { saveUserinfo }
+// )(Form.create()(Login))
+
+export default Login
+
+
+// 装饰器写法等同于如下的高阶组件写法
+// export default connect(
+//   state => ({ userinfo: state.userinfo }),
+//   { saveUserinfo }
+// )(Form.create()(checklogin(Login)))
