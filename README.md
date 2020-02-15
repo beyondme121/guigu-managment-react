@@ -675,3 +675,132 @@ class Admin extends Component {}
 export default Admin
 ```
 
+
+
+### 使用高阶组件做登录状态筛选
+
+> 1. 现在有两个一级容器组件, 可以通过判断用户的登录状态, isLogin判断如果为true, 不让访问Login组件, false不让访问Admin组件.
+>
+> 2. 问题: 如果有20个需要登录的页面需要验证登录状态才能访问, 就不能在每个组件中多次写相同的代码来进行跳转到Login
+>
+> ```js
+> // 某个需要登录才能访问的页面
+> render () {
+>   const { isLogin } = this.props.userinfo   // 从redux中获取登录判断标识
+>   if (!isLogin) {
+>     return <Redirect to="/login"/>
+>   }
+> }
+> ```
+>
+> 3. 构思一个checkLogin的高阶组件, 类似拦截器的作用
+
+
+
+```js
+// 高阶组件 用于根据用户登录状态 判断
+/**
+ * 1. 如果已经登陆, 访问 /login, 跳转到 /admin
+ * 2. 如果未登录, 访问 /admin , 跳转到 /login
+ */
+
+// 高阶组件: 是一个函数, 接收一个组件 返回一个新组件
+
+import React, { Component } from 'react'
+import { Redirect } from "react-router-dom";
+import { connect } from 'react-redux'
+
+export default function (CurrentComponent) {
+
+  @connect(
+    state => ({ isLogin: state.userinfo.isLogin })
+  )
+  class NewComponent extends Component {
+
+    render () {
+      // 接收原始组件的所有参数, 原封不动的传递给原始组件
+      const { ...params } = this.props
+      // 判断逻辑
+      const pathname = this.props.history.location.pathname
+      if (pathname === '/login' && this.props.isLogin) return <Redirect to="/admin"/>
+      if (pathname === '/admin' && !this.props.isLogin) return <Redirect to="/login"/>
+      return (
+        <CurrentComponent {...params}/>
+      )
+    }
+  }
+  return NewComponent
+}
+```
+
+4. Login和Admin组件中就可以不用单独再进行获取状态, 再进行判断是否为true, 然后再Redirect到不同的路径
+
+```js
+// login.js
+
+@connect(
+  // 此处获取状态仅仅为了判断, 在高阶组件中完成功能, 此处没必要引入redux中的state数据
+  // state => ({ userinfo: state.userinfo }),
+  null,
+  { saveUserinfo }
+)
+@Form.create()
+// 增加装饰器
+@checklogin
+class Login extends Component {
+  
+  render() {
+    ////////////////////  注释了 获取登录标识 && 判断并跳转的逻辑  ////////////////////
+    // 获取用户是否登陆
+    // const { isLogin } = this.props.userinfo
+
+    // 判断登陆状态, 已经登陆跳转到admin,就不再访问登陆
+    // if (isLogin) {
+    //   // this.props.history.replace('/admin')
+    //   return <Redirect to="/admin"/>
+    // }
+  }
+}
+```
+
+5. Admin.js
+
+```js
+@checklogin
+class Admin extends Component {
+  
+  render() {
+    // const { isLogin } = this.props.userinfo
+    // if (!isLogin) {
+    //   return <Redirect to="/login" />
+    // }
+  }
+}
+```
+
+
+
+6. 装饰器是自上向下的修饰
+
+> 如下装饰器写法
+
+```js
+@connect(
+	state => ({ userinfo: state.userinfo }),
+  { save_user }
+)
+@Form.create()
+@checklogin
+class MyClass {}
+```
+
+> 等同于
+
+```js
+// 装饰器写法等同于如下的高阶组件写法
+export default connect(
+  state => ({ userinfo: state.userinfo }),
+  { saveUserinfo }
+)(Form.create()(checklogin(Login)))
+```
+

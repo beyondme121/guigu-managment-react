@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { connect } from 'react-redux'
-import { Redirect } from 'react-router-dom'
 import { Form, Icon, Input, Button, message } from "antd";
+import checklogin from '../check-login/check-login'   // 高阶组件, 装饰器
 import { reqLogin } from '../../api'
 import { saveUserinfo } from '../../redux/actions/login-action'
 
@@ -10,10 +10,13 @@ import logo from "../../assets/images/ABB_Logo.png";
 const { Item } = Form;
 
 @connect(
-  state => ({ userinfo: state.userinfo }),
+  // 此处获取状态仅仅为了判断, 在高阶组件中完成功能, 此处没必要引入redux中的state数据
+  // state => ({ userinfo: state.userinfo }),
+  null,
   { saveUserinfo }
 )
 @Form.create()
+@checklogin
 class Login extends Component {
   // 点击登录提交登录请求
 
@@ -52,14 +55,14 @@ class Login extends Component {
 
   render() {
     // 获取用户是否登陆
-    const { isLogin } = this.props.userinfo
+    // const { isLogin } = this.props.userinfo
     const { getFieldDecorator } = this.props.form;
 
     // 判断登陆状态, 已经登陆跳转到admin,就不再访问登陆
-    if (isLogin) {
-      // this.props.history.replace('/admin')
-      return <Redirect to="/admin"/>
-    }
+    // if (isLogin) {
+    //   // this.props.history.replace('/admin')
+    //   return <Redirect to="/admin"/>
+    // }
 
     return (
       <div id="login">
@@ -117,3 +120,10 @@ class Login extends Component {
 // )(Form.create()(Login))
 
 export default Login
+
+
+// 装饰器写法等同于如下的高阶组件写法
+// export default connect(
+//   state => ({ userinfo: state.userinfo }),
+//   { saveUserinfo }
+// )(Form.create()(checklogin(Login)))

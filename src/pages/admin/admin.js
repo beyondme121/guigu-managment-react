@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from 'react-redux'
-import { Redirect } from 'react-router-dom'
+import checklogin from '../check-login/check-login'   // 高阶组件, 装饰器
 import { deleteUserinfo } from '../../redux/actions/login-action'
 
 // 装饰器写法
@@ -8,15 +8,16 @@ import { deleteUserinfo } from '../../redux/actions/login-action'
   state => ({ userinfo: state.userinfo }),
   { deleteUserinfo }
 )
+@checklogin
 class Admin extends Component {
   logout = () => {
     this.props.deleteUserinfo()
   }
   render() {
-    const { isLogin } = this.props.userinfo
-    if (!isLogin) {
-      return <Redirect to="/login" />
-    }
+    // const { isLogin } = this.props.userinfo
+    // if (!isLogin) {
+    //   return <Redirect to="/login" />
+    // }
     return <div style={{fontSize: '26px'}}>
       Admin, {this.props.userinfo.user.username}
       <div>
