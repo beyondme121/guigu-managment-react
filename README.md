@@ -437,7 +437,7 @@ export default connect(
 
 ### 维护用户的登录状态
 1. 使用localStorage保存用户的状态, 在那里保存, 在页面中setItem?
-  通常在一次操作中融合多个操作, --> 在修改redux状态时, 调用local, redux中的action
+    通常在一次操作中融合多个操作, --> 在修改redux状态时, 调用local, redux中的action
 
 ```js
 import { SAVE_USER } from "../action-types";
@@ -572,3 +572,106 @@ if (!isLogin) {
   return <Redirect to="/login" />
 }
 ```
+
+### 装饰器语法
+> https://www.babeljs.cn/docs/babel-plugin-proposal-decorators
+
+1. 安装 yarn add @babel/plugin-proposal-decorators
+2. 修改vscode配置, 搜索Decorators，选中 Experimental Decorators
+3. 配置webpack, 因为使用了react脚手架, 直接在config-overrides.js中增加装饰器语法
+```js
+const { override, fixBabelImports, addLessLoader, addDecoratorsLegacy } = require('customize-cra');
+
+module.exports = override(
+  fixBabelImports('import', {
+    libraryName: 'antd',
+    libraryDirectory: 'es',
+    style: 'css',
+    style: true,
+  }),
+  addLessLoader({
+    javascriptEnabled: true,
+    modifyVars: { '@primary-color': '#1DA57A' },
+  }),
+  addDecoratorsLegacy()
+);
+
+```
+
+- 1. 没有返回值的装饰器函数
+```js
+// 装饰器函数
+function demo (target) { 
+  target.username = '给类添加静态属性username'
+}
+
+// 类
+@demo
+class AddUserNameComponent {}
+
+// 类上就有了静态属性
+console.log(AddUserNameComponent.username)
+```
+
+- 有返回值的情况, 但是不是函数
+
+```js
+function demo (target) {
+  target.username = 'hello'
+  return 100
+}
+
+@demo
+class Hello {}
+
+// 装饰之后相当于
+Hello = demo(Hello)  // 此时Hello类被复写了, 是100
+```
+
+- 第三种情况: 有返回值, 是函数
+
+```js
+// 第三种情况: 有返回值, 是函数
+function noDemo (data) {
+  data += '!'
+  console.log(data)
+  return (target) => {
+    target.username = 'sanfeng'
+    target.age = 99
+    return target
+  }
+}
+
+// 装饰器调用返回了一个函数，这个函数继续装饰类MyNoDemo
+@noDemo('hello')
+class MyNoDemo {}
+
+console.log(MyNoDemo.username, MyNoDemo.age)
+
+```
+
+
+- 改造login组件
+> 给Login组件增加装饰器的形式, 链接redux
+```js
+@connect(
+  state => ({ userinfo: state.userinfo }),
+  { saveUserinfo }
+)
+@Form.create()
+class Login extends Component {}
+export default Login
+```
+
+- 改造admin组件
+
+```js
+@connect(
+	state => ({ userinfo: state.userinfo }),
+  { deleteUserInfo }
+)
+class Admin extends Component {}
+
+export default Admin
+```
+

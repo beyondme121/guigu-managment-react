@@ -3,6 +3,11 @@ import { connect } from 'react-redux'
 import { Redirect } from 'react-router-dom'
 import { deleteUserinfo } from '../../redux/actions/login-action'
 
+// 装饰器写法
+@connect(
+  state => ({ userinfo: state.userinfo }),
+  { deleteUserinfo }
+)
 class Admin extends Component {
   logout = () => {
     this.props.deleteUserinfo()
@@ -21,7 +26,10 @@ class Admin extends Component {
   }
 }
 
-export default connect(
-  state => ({ userinfo: state.userinfo }),
-  { deleteUserinfo }
-)(Admin)
+// export default connect(
+//   state => ({ userinfo: state.userinfo }),
+//   { deleteUserinfo }
+// )(Admin)
+
+// 暴露出去的是经过装饰器包装后的组件
+export default Admin

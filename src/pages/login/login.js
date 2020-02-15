@@ -7,8 +7,13 @@ import { saveUserinfo } from '../../redux/actions/login-action'
 
 import "./css/login.less";
 import logo from "../../assets/images/ABB_Logo.png";
-
 const { Item } = Form;
+
+@connect(
+  state => ({ userinfo: state.userinfo }),
+  { saveUserinfo }
+)
+@Form.create()
 class Login extends Component {
   // 点击登录提交登录请求
 
@@ -106,7 +111,9 @@ class Login extends Component {
 }
 
 // 映射redux的状态以及修改状态的行为action
-export default connect(
-  state => ({ userinfo: state.userinfo }),
-  { saveUserinfo }
-)(Form.create()(Login))
+// export default connect(
+//   state => ({ userinfo: state.userinfo }),
+//   { saveUserinfo }
+// )(Form.create()(Login))
+
+export default Login
