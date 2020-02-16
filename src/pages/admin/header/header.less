@@ -1,0 +1,48 @@
+.header {
+  background-color: #fff;
+  .header-top {
+    height: 40px;
+    line-height: 40px;
+    border-bottom: 1px solid #1DA57A;
+    text-align: right;
+    padding-right: 20px;
+    span {
+      margin: 0 -8px 0 16px;
+    }
+  }
+  .header-bottom {
+    height: 40px;
+    line-height: 40px;
+    display: flex;
+    .header-bottom-left {
+      position: relative;
+      width: 25%;
+      font-size: 20px;
+      text-align: center;
+      &::after {
+        position: absolute;
+        top: 40px;
+        // 距离左侧50%, 参考的是父元素(相对对位的父元素)
+        left: 50%;
+        // 移动参考自身
+        transform: translateX(-50%);
+        content: '';
+        width: 0;
+        height: 0;
+        display: block;
+        border-top: 20px solid #fff;
+        border-bottom: 20px solid transparent;
+        border-left: 20px solid transparent;
+        border-right: 20px solid transparent;
+      }
+    }
+    .header-bottom-right {
+      width: 75%;
+      text-align: right;
+      margin-right: 20px;
+      img {
+        margin: 0 10px;
+      }
+    }
+  }
+}
