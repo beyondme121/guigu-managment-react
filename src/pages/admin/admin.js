@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { connect } from 'react-redux'
-import { Layout } from 'antd'
-
+import { Layout, Button } from 'antd'
+import { reqCategorys } from '../../api'
 import Header from "./header/header";
 import checklogin from '../check-login/check-login'   // 高阶组件, 装饰器
 import { deleteUserinfo } from '../../redux/actions/login-action'
@@ -15,13 +15,18 @@ const { Content, Footer, Sider } = Layout
 )
 @checklogin
 class Admin extends Component {
-  logout = () => {
-    this.props.deleteUserinfo()
+
+  getCategory = async () => {
+    let result = await reqCategorys()
+    console.log("result: ", result)
   }
+
   render() {
     return (
       <Layout className="admin">
-        <Sider>Sider</Sider>
+        <Sider>
+          <Button onClick={this.getCategory}>请求数据</Button>
+        </Sider>
         <Layout>
           <Header />
           <Content>Content</Content>

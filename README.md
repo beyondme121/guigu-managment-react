@@ -501,7 +501,7 @@ export default connect(
 
 - 难道每个组件都要从状态中拿出登陆状态,判断一下,再返回组件吗? 使用高阶组件, 传递一个组件, 返回一个经过判断的组件
 
-### 简易版本的推出登陆
+### 简易版本的退出登陆
 - login-action.js中增加deleteUser的actioncreator, 同时清空local中保存的数据
 - reducers增加 清空redux状态数据
 
@@ -839,10 +839,6 @@ export default connect(
 
 
 ### 桌面开发工具插件 utools
-### 国内版本的workflow --> 
-### 查找解决方案的网站思否 
-https://segmentfault.com/
-
 ### 网页全屏
 `yarn add screenfull`
 
@@ -975,8 +971,12 @@ dayjs().format('YYYY-MM-DD HH:mm:ss')
 ### 获取百度天气
 
 - 使用百度提供的api接口
+
 - 请求方式GET, JSONP的请求方式
+
 - `yarn add jsonp`
+
+- > https://juejin.im/post/5dba482ae51d452a05505da2
 
 
 
@@ -996,5 +996,161 @@ const getWeather = () => {
 }
 ```
 
+> http://api.map.baidu.com/telematics/v3/weather?location=${city}&output=json&ak=3p49MVra6urFRGOT9s8UBWr2
 
+函数接收一个city参数
+
+```js
+import jsonp from 'jsonp'
+import { WEATHER_BASE_URL , WEATHER_AK_KEY} from '../config'
+import { message } from 'antd';
+
+// 百度天气
+export const reqWeatherData = city => {
+  return new Promise((resolve, reject) => {
+    jsonp(`${WEATHER_BASE_URL}?location=${city}&output=json&ak=${WEATHER_AK_KEY}`,(err, data) => {
+      if (!err) {
+        resolve(data)
+      } else {
+        // 不要reject, 不优雅
+        message.error('获取天气数据失败, 请联系管理员')
+      }
+    })
+  })
+}
+
+```
+
+- config.js
+
+集中管理url和ak
+
+```js
+export const WEATHER_BASE_URL = 'http://api.map.baidu.com/telematics/v3/weather'
+export const WEATHER_AK_KEY = '3p49MVra6urFRGOT9s8UBWr2'
+```
+
+- 入口html文件
+
+> 搜狐开放的接口, 查询访问用户的ip地址，城市，邮编信息，
+>
+> 将信息放在window上,组件内可以使用
+
+```html
+<script src="http://pv.sohu.com/cityjson?ie=utf-8"></script>
+<script>
+      window.returnCitySN = returnCitySN
+</script>
+```
+
+- 组件内 header
+
+```js
+componentDidMount () {
+	// 请求百度天气
+  this.getWeather()
+}
+
+getWeather = async () => {
+  const { cname } = window.returnCitySN;
+  const { dayPictureUrl, weather } = await reqWeatherData(cname);
+  this.setState({
+    dayPictureUrl,
+    weather,
+  });
+};
+```
+
+
+
+### 一个好用的vs插件集合
+
+> https://juejin.im/post/5e440fd4e51d4527271e8b79
+
+
+
+### token: 餐厅的代金券
+
+- 请求携带参数
+  - query参数
+  - param参数
+  - 请求体参数
+  - headers: token的携带参数的方式
+- 第一次用户登录, 用户名密码, 后台校验之后通过，服务器存一份token，发给客户端一份token，用户下次再请求服务器, 会携带这个token, 服务端获取客户端的token与服务器保存的token进行校验, 校验通过允许请求
+- token验证不通过的情况
+  - 客户端浏览器没有携带token
+  - 携带的token过期
+  - token被篡改，是错误的token
+  - 用户清空了缓存, 刷新了页面(local和redux中都没有了token)
+
+
+
+### 请求一个未授权的接口
+
+场景: 无论是否登陆了, 请求产品分类信息 myAxios.get(/manage/Category/list), 返回状态码401
+
+原因分析:
+
+后台在接收请求前要判断请求header中是否携带了token, 校验token. 但是，前端还没有配置请求拦截器, 将除了/login之外的所有请求接口的headers加上token 
+
+
+
+### axios请求拦截器配置header
+
+1. 可以从local中获取token
+2. 可以从redux中获取token (采取这种方式的原因是: 1. local获取比redux中慢 2. 也不安全)
+
+```js
+import store from '../redux/store'
+
+axios.interceptors.request.use(config => {
+	// 配置头部的token信息
+  // 从redux中获取token
+  const { token } = store.getState().userinfo.user
+  // if (token) config.headers.Authorization = 'iab_' + token
+  if (token) config.headers.common['token'] = token;
+  // ...
+  
+  return config
+}
+```
+
+
+
+### 配合服务端签发带有过期时间的token
+
+
+
+
+
+### 当token过期,如何处理
+
+1. 不能只是提示用户登录过期
+2. 跳转到登录页重新登录
+
+```js
+axios.interceptors.response.use(
+  response => {
+    NProgress.done()
+    return response.data
+  },
+  error => {
+    NProgress.done()
+    // 此处判断是否为401状态, 未授权
+    if (error.response.status === 401) {
+      message.error('身份验证失败, 请重新登录')
+      // 退出登录删除local以及redux状态的actionCreator
+      store.dispatch(deleteUserinfo())
+    } else {
+      message.error('请求出错,请联系管理员')
+    }
+    // 失败的回调, 如果返回的不是promise对象, 会当做成功返回, 会调用response.use的第一个函数
+    return new Promise(() => {})
+  }
+)
+```
+
+
+
+### 左侧导航
 
