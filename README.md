@@ -804,3 +804,197 @@ export default connect(
 )(Form.create()(checklogin(Login)))
 ```
 
+### Admin组件布局
+
+- 分析Admin整体布局
+  - 左右结构, 左侧导航, 右侧是上中下结构
+
+- 用css样式实现下箭头
+
+```less
+.header-bottom-left {
+      position: relative;
+      width: 25%;
+      font-size: 20px;
+      text-align: center;
+      &::after {
+        position: absolute;
+        top: 40px;
+        // 距离左侧50%, 参考的是父元素(相对对位的父元素)
+        left: 50%;
+        // 移动参考自身
+        transform: translateX(-50%);
+        content: '';
+        width: 0;
+        height: 0;
+        display: block;
+        border-top: 20px solid blue;
+        border-bottom: 20px solid transparent;
+        border-left: 20px solid transparent;
+        border-right: 20px solid transparent;
+      }
+}
+```
+
+
+
+### 桌面开发工具插件 utools
+### 国内版本的workflow --> 
+### 查找解决方案的网站思否 
+https://segmentfault.com/
+
+### 网页全屏
+`yarn add screenfull`
+
+- 1. 实现全屏切换
+```js
+import screenfull from 'screenfull'
+// ...
+swichScreen = () => {
+    screenfull.toggle()
+}
+```
+
+- 2. 进入全屏后, 图标需要变更为退出全屏的图标
+> 设计状态
+
+```js
+state = {
+  isFull: false
+}
+swichScreen = () => {
+  const { isFull } = this.state
+  screenfull.toggle()
+  this.setState({
+    isFull: !isFull
+  })
+}
+```
+
+- 当用户点击全屏按钮, 然后按ESC, 图标按钮没有变化, 也就是没有调用this.setState修改状态
+  - 1. 可以监控键盘事件, 如果按下的是ESC了, 改变状态
+  - 2. 使用screenfull提供的api， screenfull.on('change', () => {}), 只要是全屏状态改变就会调用回调函数
+    - 这个监控键盘事件是监听键盘事件的, 只需要监听一次, 在didMount中监听
+  - 3. swichScreen只用于切换, 生命周期用于监听api的事件监听
+
+```js
+  swichScreen = () => {
+      screenfull.toggle()
+  }
+
+  componentDidMount () {
+    screenfull.on('change', () => {
+      this.setState({
+        isFull: !this.state.isFull
+      })
+    })
+  }
+```
+
+- 全屏的设计问题
+> 当用户按F11是浏览器全屏
+> 程序控制的是浏览器 tab的全屏
+> 所以如果F11之后,想通过点击按钮退出全屏是做不到的, W3C的标准
+
+
+### 退出登录
+> this 一般使用箭头函数, 我这么写单纯是为了回顾作用域的知识点
+
+```js
+// 退出登录, 模态框
+  logout = () => {
+    let _this = this
+    confirm({
+      title: '确定要退出登录?',
+      content: '退出登录后需要重新登录',
+      okText: '确定',
+      cancelText: '取消',
+      onOk() {
+        _this.props.deleteUserinfo()
+      },
+      // onCancel() {
+      //   console.log('Cancel');
+      // },
+      onOk: () => {
+        this.props.deleteUserinfo()
+      }
+    });
+  }
+```
+
+### 处理时间dayjs
+```js
+import dayjs from 'dayjs'
+
+// dayjs() 返回当前的时间戳
+dayjs().format('YYYY-MM-DD HH:mm:ss')
+```
+
+```js
+  state = {
+    date: Date.now()
+  }
+  componentDidMount () {
+    // 开启定时器
+    this.timer = setInterval(() => {
+      this.setState({
+        date: Date.now()
+      })
+    }, 1000)
+    // 监听全屏的变化
+    screenfull.on('change', () => {
+      this.setState({
+        isFull: !this.state.isFull
+      })
+    })
+  }
+
+  // 组件加载开启定时器,卸载需要清空定时器
+  componentWillUnmount () {
+    clearInterval(this.timer)
+  }
+
+  componentDidMount () {
+    // 开启定时器
+    this.timer = setInterval(() => {
+      this.setState({
+        date: dayjs().format('YYYY-MM-DD HH:mm:ss')
+      })
+    }, 1000)
+    // 监听全屏的变化
+    screenfull.on('change', () => {
+      this.setState({
+        isFull: !this.state.isFull
+      })
+    })
+  }
+```
+
+
+
+### 获取百度天气
+
+- 使用百度提供的api接口
+- 请求方式GET, JSONP的请求方式
+- `yarn add jsonp`
+
+
+
+### 一个通用问题
+
+- 问题描述
+
+一个函数, 内部开启了一个异步函数调用, 回调函数(注意是回调函数,不是async await，如果是await就没有回调函数涉及到作用域的问题了）的返回值如何传递给最外层的函数
+
+**！！！用Promise**
+
+```js
+const getWeather = () => {
+	jsonp(url, (err, data) => {
+    return data				// 此处return的数据返回给了回调函数, 并没有返回给最外层的getWeather函数
+  })
+}
+```
+
+
+

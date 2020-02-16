@@ -1,8 +1,13 @@
 import React, { Component } from "react";
 import { connect } from 'react-redux'
+import { Layout } from 'antd'
+
+import Header from "./header/header";
 import checklogin from '../check-login/check-login'   // 高阶组件, 装饰器
 import { deleteUserinfo } from '../../redux/actions/login-action'
+import './less/admin.less'
 
+const { Content, Footer, Sider } = Layout
 // 装饰器写法
 @connect(
   state => ({ userinfo: state.userinfo }),
@@ -14,23 +19,16 @@ class Admin extends Component {
     this.props.deleteUserinfo()
   }
   render() {
-    // const { isLogin } = this.props.userinfo
-    // if (!isLogin) {
-    //   return <Redirect to="/login" />
-    // }
-    return <div style={{fontSize: '26px'}}>
-      Admin, {this.props.userinfo.user.username}
-      <div>
-        <button onClick={this.logout}>退出登陆</button>
-      </div>
-    </div>;
+    return (
+      <Layout className="admin">
+        <Sider>Sider</Sider>
+        <Layout>
+          <Header />
+          <Content>Content</Content>
+          <Footer>Footer</Footer>
+        </Layout>
+      </Layout>
+    )
   }
 }
-
-// export default connect(
-//   state => ({ userinfo: state.userinfo }),
-//   { deleteUserinfo }
-// )(Admin)
-
-// 暴露出去的是经过装饰器包装后的组件
 export default Admin
