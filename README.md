@@ -1154,3 +1154,206 @@ axios.interceptors.response.use(
 
 ### 左侧导航
 
+- 编写left-nav组件的静态页面, antd的Menu的使用，包含Menu的属性，默认打开，选中，theme等，子菜单
+- 点击某个导航
+  - 中间区域切换不同菜单对应的内容
+  - url变更不同的路径(点击切换路由)
+- 设计Admin组件的二级路由
+
+
+
+```jsx
+import React, { Component } from 'react';
+import { Menu, Icon } from 'antd';
+import logo from '../../../assets/images/ABB_Logo.png';
+import './left-nav.less';
+const { SubMenu, Item } = Menu;
+
+export default class LeftNav extends Component {
+  render() {
+    return (
+      <div>
+        <div className="nav-top">
+          <img src={logo} alt="logo" />
+          <h1>管理后台</h1>
+        </div>
+        <Menu defaultSelectedKeys={['1']} defaultOpenKeys={['sub1']} mode="inline" theme="light">
+          <Item key="1">
+            <Icon type="pie-chart" />
+            <span>Option 1</span>
+          </Item>
+          <SubMenu
+            key="sub1"
+            title={
+              <span>
+                <Icon type="mail" />
+                <span>Navigation One</span>
+              </span>
+            }
+          >
+            <Item key="5">
+              <Icon type="pie-chart" />
+              <span>Option 1</span>
+            </Item>
+            <Item key="6">
+              <Icon type="pie-chart" />
+              <span>Option 1</span>
+            </Item>
+          </SubMenu>
+        </Menu>
+      </div>
+    );
+  }
+}
+```
+
+- Left-nav.less
+
+```less
+.nav-top {
+  background-color: #fff;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  h1 {
+    font-size: 24px;
+    margin-bottom: 0px;
+  }
+  img {
+    margin: 0 10px;
+  }
+}
+```
+
+
+
+- 设计路由
+
+> 在中间区域的content显示内容, 是在admin两个一级路由中的admin路由下的多个二级路由
+>
+> - 新建多个容器组件(路由组件)，在admin组件中配置路由
+
+
+
+- 创建菜单的函数
+
+分析:
+
+1. 如果menuconfig菜单配置数组中,如果某一项没有有子菜单,直接返回Item, 如果有子菜单, 先返回SubMenu
+2. 配置SubMenu中的属性, 地柜调用createMenu函数,遍历当前item的children所有的item,渲染子菜单
+
+```js
+createMenu = list => {
+    return list.map(menu => {
+      const { title, key, icon, path, children } = menu
+      if (!children) {
+        return (
+          <Item key={key}>
+            <Link to={path}>
+              <Icon type={icon} />
+              <span>{title}</span>
+            </Link>
+          </Item>
+        );
+      } else {
+        return (
+          <SubMenu
+            key={key}
+            title={
+              <span>
+                <Icon type={icon} />
+                <span>{title}</span>
+              </span>
+            }
+          >
+            { this.createMenu(children) }
+          </SubMenu>
+        )
+      }
+    });
+};
+```
+
+- render方法中的函数调用, Menu不需要遍历
+
+```js
+import menuConfig from '../../../config/menu-config';
+<Menu
+  defaultSelectedKeys={['1']}
+  defaultOpenKeys={['sub1']}
+  mode="inline"
+  theme="light"
+  className="menu"
+>
+  { this.createMenu(menuConfig) }
+</Menu>
+```
+
+
+
+### Mac系统快捷键修改
+
+```js
+进行System Preference > Keyboard > Keyboard Shortcuts
+选择左边的Application Shortcuts，添加以下的快捷键：
+
+Copy ^C
+Undo ^Z
+Undo Typing ^Z
+Cut ^X
+Paste ^V
+Select All ^A
+```
+
+### 处理导航默认选中+展开问题
+- Left-Nav刷新页面,默认选中之前选中的Menu.Item
+- 根据url路径, 找到最后一个"/"后的路径,赋值给Menu的属性
+- defaultSelectedKeys只能赋值一次,left-nav在整个应用渲染了两次
+- 当登录成功后, <Redirect to="/admin"/>, 但是在Admin组件中,没有配置"/admin",而是直接重定向到/admin/home, 程序再次从跟路由中查找, 即从App.js中查找, 找啊找, 一看/login. /admin都没有, 继续进入admin组件中查找, 发现有/admin/home了, 在查找之前, 代码已经执行过了left-nav组件, 组件内又重新获取了url中最后一个单词,home, 和left-nav第一次获取的第一个单词admin并不冲突, 都能够获取到, 但是antd中的Menu组件的defaultSelectedKeys只能接收一次,之后再次赋值就没有效果了。这就是使用defaultSelectedKeys的"坑",使用selectedKeys就没有这个问题
+
+```js
+import { withRouter } from 'react-router-dom'
+
+@withRouter
+class LeftNav extends Component {
+  render () {
+    const { pathname } = this.props.history.location
+    let selectedKeys = pathname.split('/').reverse()[0]
+    // ...
+    return (
+      // ...
+      <Menu
+        selectedKeys={[selectedKeys]}
+      >
+      </Menu>
+    )
+  }
+}
+export default LeftNav
+```
+
+
+### 如何区分一个组件是路由组件还是普通组件
+- 如果直接被Switch包裹起来的就是路由组件
+- 中间有别的嵌套就没有路由组件中history,match等路由属性
+- 比如left-nav组件, 在Admin组件中, 而check-login组件中可以获取history,是因为可以直接修饰路由组件
+- check-login装饰了login以及admin, 这两个组件在App中被Swith包裹
+```js
+// Admin.js
+<Sider>
+  <LeftNav />
+</Sider>
+// App.js
+<Switch>
+  <Route path="/login" component={Login}/>
+  <Route path="/admin" component={Admin}/>
+  <Redirect to="/login" />
+</Switch>
+```
+
+### 给非路由组件添加路由属性
+- withRouter
+
+### 增加默认打开二级菜单功能
+> 当选中某个菜单,或者路由跳转回原来的某个二级Item, 上一级的SubMenu要展开
+
