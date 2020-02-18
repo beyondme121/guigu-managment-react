@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <!-- 搜狐接口 -->
+  <script src="http://pv.sohu.com/cityjson?ie=utf-8"></script>
+  <!-- 新浪接口 -->
+  <!-- <script type="text/javascript" src="http://counter.sina.com.cn/ip/" charset="gb2312"></script> -->
+</head>
+
+<body>
+  <script>
+    document.write(returnCitySN["cip"] + ',' + returnCitySN["cname"])
+    console.log(returnCitySN)
+
+  </script>
+
+  <script>
+    // document.writeln("IP地址：" + ILData[0] + "<br />"); //输出接口数据中的IP地址
+    // document.writeln("地址类型：" + ILData[1] + "<br />"); //输出接口数据中的IP地址的类型
+    // document.writeln("地址类型：" + ILData[2] + "<br />"); //输出接口数据中的IP地址的省市
+    // document.writeln("地址类型：" + ILData[3] + "<br />"); //输出接口数据中的IP地址的
+    // document.writeln("地址类型：" + ILData[4] + "<br />"); //输出接口数据中的IP地址的运营商
+
+  </script>
+
+  <script>
+    // window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window
+    // .webkitRTCPeerConnection; //compatibility for Firefox and chrome
+    // var pc = new RTCPeerConnection({
+    //     iceServers: []
+    //   }),
+    //   noop = function () {};
+    // pc.createDataChannel(''); //create a bogus data channel
+    // pc.createOffer(pc.setLocalDescription.bind(pc), noop); // create offer and set local description
+    // pc.onicecandidate = function (ice) {
+    //   if (ice && ice.candidate && ice.candidate.candidate) {
+    //     var myIP = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/.exec(ice.candidate.candidate)[1];
+    //     console.log('my IP: ', myIP);
+    //     pc.onicecandidate = noop;
+    //   }
+    // };
+
+  </script>
+</body>
+
+</html>

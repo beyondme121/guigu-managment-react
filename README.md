@@ -501,7 +501,7 @@ export default connect(
 
 - 难道每个组件都要从状态中拿出登陆状态,判断一下,再返回组件吗? 使用高阶组件, 传递一个组件, 返回一个经过判断的组件
 
-### 简易版本的推出登陆
+### 简易版本的退出登陆
 - login-action.js中增加deleteUser的actioncreator, 同时清空local中保存的数据
 - reducers增加 清空redux状态数据
 
@@ -839,10 +839,6 @@ export default connect(
 
 
 ### 桌面开发工具插件 utools
-### 国内版本的workflow --> 
-### 查找解决方案的网站思否 
-https://segmentfault.com/
-
 ### 网页全屏
 `yarn add screenfull`
 
@@ -975,8 +971,12 @@ dayjs().format('YYYY-MM-DD HH:mm:ss')
 ### 获取百度天气
 
 - 使用百度提供的api接口
+
 - 请求方式GET, JSONP的请求方式
+
 - `yarn add jsonp`
+
+- > https://juejin.im/post/5dba482ae51d452a05505da2
 
 
 
@@ -996,5 +996,439 @@ const getWeather = () => {
 }
 ```
 
+> http://api.map.baidu.com/telematics/v3/weather?location=${city}&output=json&ak=3p49MVra6urFRGOT9s8UBWr2
+
+函数接收一个city参数
+
+```js
+import jsonp from 'jsonp'
+import { WEATHER_BASE_URL , WEATHER_AK_KEY} from '../config'
+import { message } from 'antd';
+
+// 百度天气
+export const reqWeatherData = city => {
+  return new Promise((resolve, reject) => {
+    jsonp(`${WEATHER_BASE_URL}?location=${city}&output=json&ak=${WEATHER_AK_KEY}`,(err, data) => {
+      if (!err) {
+        resolve(data)
+      } else {
+        // 不要reject, 不优雅
+        message.error('获取天气数据失败, 请联系管理员')
+      }
+    })
+  })
+}
+
+```
+
+- config.js
+
+集中管理url和ak
+
+```js
+export const WEATHER_BASE_URL = 'http://api.map.baidu.com/telematics/v3/weather'
+export const WEATHER_AK_KEY = '3p49MVra6urFRGOT9s8UBWr2'
+```
+
+- 入口html文件
+
+> 搜狐开放的接口, 查询访问用户的ip地址，城市，邮编信息，
+>
+> 将信息放在window上,组件内可以使用
+
+```html
+<script src="http://pv.sohu.com/cityjson?ie=utf-8"></script>
+<script>
+      window.returnCitySN = returnCitySN
+</script>
+```
+
+- 组件内 header
+
+```js
+componentDidMount () {
+	// 请求百度天气
+  this.getWeather()
+}
+
+getWeather = async () => {
+  const { cname } = window.returnCitySN;
+  const { dayPictureUrl, weather } = await reqWeatherData(cname);
+  this.setState({
+    dayPictureUrl,
+    weather,
+  });
+};
+```
 
 
+
+### 一个好用的vs插件集合
+
+> https://juejin.im/post/5e440fd4e51d4527271e8b79
+
+
+
+### token: 餐厅的代金券
+
+- 请求携带参数
+  - query参数
+  - param参数
+  - 请求体参数
+  - headers: token的携带参数的方式
+- 第一次用户登录, 用户名密码, 后台校验之后通过，服务器存一份token，发给客户端一份token，用户下次再请求服务器, 会携带这个token, 服务端获取客户端的token与服务器保存的token进行校验, 校验通过允许请求
+- token验证不通过的情况
+  - 客户端浏览器没有携带token
+  - 携带的token过期
+  - token被篡改，是错误的token
+  - 用户清空了缓存, 刷新了页面(local和redux中都没有了token)
+
+
+
+### 请求一个未授权的接口
+
+场景: 无论是否登陆了, 请求产品分类信息 myAxios.get(/manage/Category/list), 返回状态码401
+
+原因分析:
+
+后台在接收请求前要判断请求header中是否携带了token, 校验token. 但是，前端还没有配置请求拦截器, 将除了/login之外的所有请求接口的headers加上token 
+
+
+
+### axios请求拦截器配置header
+
+1. 可以从local中获取token
+2. 可以从redux中获取token (采取这种方式的原因是: 1. local获取比redux中慢 2. 也不安全)
+
+```js
+import store from '../redux/store'
+
+axios.interceptors.request.use(config => {
+	// 配置头部的token信息
+  // 从redux中获取token
+  const { token } = store.getState().userinfo.user
+  // if (token) config.headers.Authorization = 'iab_' + token
+  if (token) config.headers.common['token'] = token;
+  // ...
+  
+  return config
+}
+```
+
+
+
+### 配合服务端签发带有过期时间的token
+
+
+
+
+
+### 当token过期,如何处理
+
+1. 不能只是提示用户登录过期
+2. 跳转到登录页重新登录
+
+```js
+axios.interceptors.response.use(
+  response => {
+    NProgress.done()
+    return response.data
+  },
+  error => {
+    NProgress.done()
+    // 此处判断是否为401状态, 未授权
+    if (error.response.status === 401) {
+      message.error('身份验证失败, 请重新登录')
+      // 退出登录删除local以及redux状态的actionCreator
+      store.dispatch(deleteUserinfo())
+    } else {
+      message.error('请求出错,请联系管理员')
+    }
+    // 失败的回调, 如果返回的不是promise对象, 会当做成功返回, 会调用response.use的第一个函数
+    return new Promise(() => {})
+  }
+)
+```
+
+
+
+### 左侧导航
+
+- 编写left-nav组件的静态页面, antd的Menu的使用，包含Menu的属性，默认打开，选中，theme等，子菜单
+- 点击某个导航
+  - 中间区域切换不同菜单对应的内容
+  - url变更不同的路径(点击切换路由)
+- 设计Admin组件的二级路由
+
+
+
+```jsx
+import React, { Component } from 'react';
+import { Menu, Icon } from 'antd';
+import logo from '../../../assets/images/ABB_Logo.png';
+import './left-nav.less';
+const { SubMenu, Item } = Menu;
+
+export default class LeftNav extends Component {
+  render() {
+    return (
+      <div>
+        <div className="nav-top">
+          <img src={logo} alt="logo" />
+          <h1>管理后台</h1>
+        </div>
+        <Menu defaultSelectedKeys={['1']} defaultOpenKeys={['sub1']} mode="inline" theme="light">
+          <Item key="1">
+            <Icon type="pie-chart" />
+            <span>Option 1</span>
+          </Item>
+          <SubMenu
+            key="sub1"
+            title={
+              <span>
+                <Icon type="mail" />
+                <span>Navigation One</span>
+              </span>
+            }
+          >
+            <Item key="5">
+              <Icon type="pie-chart" />
+              <span>Option 1</span>
+            </Item>
+            <Item key="6">
+              <Icon type="pie-chart" />
+              <span>Option 1</span>
+            </Item>
+          </SubMenu>
+        </Menu>
+      </div>
+    );
+  }
+}
+```
+
+- Left-nav.less
+
+```less
+.nav-top {
+  background-color: #fff;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  h1 {
+    font-size: 24px;
+    margin-bottom: 0px;
+  }
+  img {
+    margin: 0 10px;
+  }
+}
+```
+
+
+
+- 设计路由
+
+> 在中间区域的content显示内容, 是在admin两个一级路由中的admin路由下的多个二级路由
+>
+> - 新建多个容器组件(路由组件)，在admin组件中配置路由
+
+
+
+- 创建菜单的函数
+
+分析:
+
+1. 如果menuconfig菜单配置数组中,如果某一项没有有子菜单,直接返回Item, 如果有子菜单, 先返回SubMenu
+2. 配置SubMenu中的属性, 地柜调用createMenu函数,遍历当前item的children所有的item,渲染子菜单
+
+```js
+createMenu = list => {
+    return list.map(menu => {
+      const { title, key, icon, path, children } = menu
+      if (!children) {
+        return (
+          <Item key={key}>
+            <Link to={path}>
+              <Icon type={icon} />
+              <span>{title}</span>
+            </Link>
+          </Item>
+        );
+      } else {
+        return (
+          <SubMenu
+            key={key}
+            title={
+              <span>
+                <Icon type={icon} />
+                <span>{title}</span>
+              </span>
+            }
+          >
+            { this.createMenu(children) }
+          </SubMenu>
+        )
+      }
+    });
+};
+```
+
+- render方法中的函数调用, Menu不需要遍历
+
+```js
+import menuConfig from '../../../config/menu-config';
+<Menu
+  defaultSelectedKeys={['1']}
+  defaultOpenKeys={['sub1']}
+  mode="inline"
+  theme="light"
+  className="menu"
+>
+  { this.createMenu(menuConfig) }
+</Menu>
+```
+
+
+
+### Mac系统快捷键修改
+
+```js
+进行System Preference > Keyboard > Keyboard Shortcuts
+选择左边的Application Shortcuts，添加以下的快捷键：
+
+Copy ^C
+Undo ^Z
+Undo Typing ^Z
+Cut ^X
+Paste ^V
+Select All ^A
+```
+
+### 处理导航默认选中+展开问题
+- Left-Nav刷新页面,默认选中之前选中的Menu.Item
+- 根据url路径, 找到最后一个"/"后的路径,赋值给Menu的属性
+- defaultSelectedKeys只能赋值一次,left-nav在整个应用渲染了两次
+- 当登录成功后, <Redirect to="/admin"/>, 但是在Admin组件中,没有配置"/admin",而是直接重定向到/admin/home, 程序再次从跟路由中查找, 即从App.js中查找, 找啊找, 一看/login. /admin都没有, 继续进入admin组件中查找, 发现有/admin/home了, 在查找之前, 代码已经执行过了left-nav组件, 组件内又重新获取了url中最后一个单词,home, 和left-nav第一次获取的第一个单词admin并不冲突, 都能够获取到, 但是antd中的Menu组件的defaultSelectedKeys只能接收一次,之后再次赋值就没有效果了。这就是使用defaultSelectedKeys的"坑",使用selectedKeys就没有这个问题
+
+```js
+import { withRouter } from 'react-router-dom'
+
+@withRouter
+class LeftNav extends Component {
+  render () {
+    const { pathname } = this.props.history.location
+    let selectedKeys = pathname.split('/').reverse()[0]
+    // ...
+    return (
+      // ...
+      <Menu
+        selectedKeys={[selectedKeys]}
+      >
+      </Menu>
+    )
+  }
+}
+export default LeftNav
+```
+
+
+### 如何区分一个组件是路由组件还是普通组件
+- 如果直接被Switch包裹起来的就是路由组件
+- 中间有别的嵌套就没有路由组件中history,match等路由属性
+- 比如left-nav组件, 在Admin组件中, 而check-login组件中可以获取history,是因为可以直接修饰路由组件
+- check-login装饰了login以及admin, 这两个组件在App中被Swith包裹
+```js
+// Admin.js
+<Sider>
+  <LeftNav />
+</Sider>
+// App.js
+<Switch>
+  <Route path="/login" component={Login}/>
+  <Route path="/admin" component={Admin}/>
+  <Redirect to="/login" />
+</Switch>
+```
+
+### 给非路由组件添加路由属性
+- withRouter
+
+### 增加默认打开二级菜单功能
+> 当选中某个菜单,或者路由跳转回原来的某个二级Item, 上一级的SubMenu要展开
+
+```js
+let openKeys = pathname.split('/').splice(2)    // 返回数组
+defaultOpenKeys={openKeys}      // 接收数组, 接收多了也无妨
+```
+
+### 16.10之后新增的生命周期函数
+- getDerivedStateFromProps(props, state)
+- 1. 阶段: 在render之前执行, 意味着在组件还没有render之前就可以设置状态
+- 2. 可以接受父组件传递进来的参数, 作为组件本身的状态
+- 3. 静态方法, 必须有返回值, 可以是state对象,也可以是null
+- 4. 必须有自己的state, 必须声明
+```js
+import React, { Component } from 'react'
+class Demo extends Component {
+  state = {
+    name: 'initname',
+    age: 10
+  }
+  // 新增
+  static getDerivedStateFromProps (props, state) {
+    console.log(props)  // 父组件传递的所有属性的对象 {username: 'xx', age: 18,...}
+    console.log(state)  // 初始的state
+    // 处理props, 将处理后的props进行返回, 作为Demo组件的状态
+    return {
+      name: props.username,
+      age: props.age + 10
+    }
+  }
+  render () {
+    return (
+      <div>
+        {this.state.name} <br/>
+        {this.state.age }
+      </div>
+    )
+  }
+}
+
+export default class Life extends Component {
+  state = {
+    username: 'sanfengxxxx',
+    count: 0
+  }
+  componentDidMount () {
+    console.log('componentDidMount')
+    this.timer = setInterval(() => {
+      this.setState(preState => ({
+        count: preState.count + 1
+      }))
+    }, 1000)
+  }
+  componentWillUnmount () {
+    clearInterval(this.timer)
+  }
+  render() {
+    const { username, count } = this.state
+    return (
+      <div>
+        { this.state.count }
+        <Demo username={username} age={count}/>
+      </div>
+    )
+  }
+}
+```
+### 新增的第一个钩子getSnapshotBeforeUpdate
+- 这个钩子只在组件更新时触发，第一次渲染不执行
+- 执行时机在render之后, 在componentDidUpdate之前
+- 配合componentDidUpdate使用
+- 用途: 获取组件在更新前的状态, 比如滚动条
+
+```js
+
+
+```
