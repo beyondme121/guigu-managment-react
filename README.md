@@ -1357,3 +1357,78 @@ export default LeftNav
 ### 增加默认打开二级菜单功能
 > 当选中某个菜单,或者路由跳转回原来的某个二级Item, 上一级的SubMenu要展开
 
+```js
+let openKeys = pathname.split('/').splice(2)    // 返回数组
+defaultOpenKeys={openKeys}      // 接收数组, 接收多了也无妨
+```
+
+### 16.10之后新增的生命周期函数
+- getDerivedStateFromProps(props, state)
+- 1. 阶段: 在render之前执行, 意味着在组件还没有render之前就可以设置状态
+- 2. 可以接受父组件传递进来的参数, 作为组件本身的状态
+- 3. 静态方法, 必须有返回值, 可以是state对象,也可以是null
+- 4. 必须有自己的state, 必须声明
+```js
+import React, { Component } from 'react'
+class Demo extends Component {
+  state = {
+    name: 'initname',
+    age: 10
+  }
+  // 新增
+  static getDerivedStateFromProps (props, state) {
+    console.log(props)  // 父组件传递的所有属性的对象 {username: 'xx', age: 18,...}
+    console.log(state)  // 初始的state
+    // 处理props, 将处理后的props进行返回, 作为Demo组件的状态
+    return {
+      name: props.username,
+      age: props.age + 10
+    }
+  }
+  render () {
+    return (
+      <div>
+        {this.state.name} <br/>
+        {this.state.age }
+      </div>
+    )
+  }
+}
+
+export default class Life extends Component {
+  state = {
+    username: 'sanfengxxxx',
+    count: 0
+  }
+  componentDidMount () {
+    console.log('componentDidMount')
+    this.timer = setInterval(() => {
+      this.setState(preState => ({
+        count: preState.count + 1
+      }))
+    }, 1000)
+  }
+  componentWillUnmount () {
+    clearInterval(this.timer)
+  }
+  render() {
+    const { username, count } = this.state
+    return (
+      <div>
+        { this.state.count }
+        <Demo username={username} age={count}/>
+      </div>
+    )
+  }
+}
+```
+### 新增的第一个钩子getSnapshotBeforeUpdate
+- 这个钩子只在组件更新时触发，第一次渲染不执行
+- 执行时机在render之后, 在componentDidUpdate之前
+- 配合componentDidUpdate使用
+- 用途: 获取组件在更新前的状态, 比如滚动条
+
+```js
+
+
+```
