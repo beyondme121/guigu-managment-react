@@ -1429,6 +1429,21 @@ export default class Life extends Component {
 - 用途: 获取组件在更新前的状态, 比如滚动条
 
 ```js
+// 接受props, state, 返回值传递给didupdate作为参数props
+  getSnapshotBeforeUpdate(props, preState) {
+    console.log("getSnapshotBeforeUpdate, props: ", props)
+    console.log("getSnapshotBeforeUpdate, preState: ", preState)
+    return "hello world"
+  }
 
+  componentDidUpdate (props, preState, data) {
+    console.log(props, preState, data)
+  }
 
+```
+
+### 修改yarn npm的镜像
+```js
+npm config set registry https://registry.npm.taobao.org/
+yarn config set registry https://registry.npm.taobao.org/
 ```
