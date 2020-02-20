@@ -25,6 +25,7 @@ axios.interceptors.request.use(config => {
   // // {name: 'xxx', age: 88} => name=xxx&age=88
   if (method.toUpperCase() === 'POST' && data instanceof Object) {
     config.data = qs.stringify(data)
+    console.log("config.data: ", config.data)
   }
   return config
 })

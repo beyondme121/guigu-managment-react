@@ -1447,3 +1447,113 @@ export default class Life extends Component {
 npm config set registry https://registry.npm.taobao.org/
 yarn config set registry https://registry.npm.taobao.org/
 ```
+
+### 根据点击不同的菜单切换header中的标题信息
+- 切换路由url, 在header中显示对应菜单的标题
+- 通过拿到url最后一个单词, 去menuconfig中匹配，返回标题
+
+> 1. import { withRouter } from 'react-router-dom'
+> 2. @withRouter 装饰器
+> 3. jsx中定义函数调用
+```jsx
+<div className="header-bottom-left">
+  <span>{this.getTitle(path)}</span>
+  {/* 在css中添加伪元素 */}
+</div>
+```
+> 4. 在config中查找对应的路由路径对应的title
+```js
+// 根据路径最后一个单词key获取title
+getTitle = (menuKey) => {
+  let title = ''
+  menuList.forEach(menu => {
+    if (!(menu.children instanceof Array)) {
+      if (menu.key === menuKey) title = menu.title
+    } else {
+      let result = menu.children.find(menuChild => {
+        return menuChild.key === menuKey
+      })
+      if (result) title = result.title
+    }
+  })
+  // 遍历 获取的数据存入到redux中, 避免用户不点击menu item一直调用这个函数
+  this.props.save_title(title)
+  return title
+}
+```
+
+### 直接在render中调用getTitle的弊端
+- getTitle每次都要遍历menuConfig, header组件中有定时器,修改状态属性date
+- 也就是每一秒都要进行更新组件, 即使React有dom diff, 很多不发生变化的虚拟dom不进行重新渲染
+- 但是getTitle函数却是每次都要执行 并获取title的
+- 如何解决?
+
+### 每次点击menu item的时候, 将title信息保存到redux中, header组件从redux中获取
+1. 在每个Item上添加onClick事件, 调用redux的action,修改状态并保存
+2. getTitle不能每次都计算,但是redux初始化的时候title是没有的,也就是要判断一下,如果redux中没有title,就使用getTitle计算数据
+3. 问题：当用户没有点击菜单时, redux中就没有title,所以会一直使用getTitle频繁遍历数组
+        所以,要在getTitle中调用 redux的action
+
+```js
+
+
+// 编写redux相关代码
+// 修改header组件,装饰器
+@connect(
+  state => ({}),
+  { save_title }
+)
+class Header extends Component {
+  getTitle = (menuKey) => {
+    let title = ''
+    menuList.forEach(menu => {
+      if (!(menu.chidlren instanceof Array)) {
+        if (menu.key === menuKey) return menu.title 
+      } else {
+        return findItem = menu.children.find(item => {
+          return menuKey === item.key
+        })
+        if (findItem) title = findItem.title
+      }
+    })
+    this.props.save_title(title)
+    return title
+  }
+  render () {
+    let pathname = this.props.history.location.pathname
+    let key = pathname.split('/').reverse()[0]
+    return (
+      <span>{this.props.title || this.getTitle(key)}</span>
+    )
+  }
+}
+```
+
+### Category商品分类管理
+- antd
+- ajax api 获取分类列表, 在添加商品管理中 Product, 需要选择商品所属分类的下拉列表, 两处使用头一个数据源, 如果每次请求数据都要重新向服务器请求数据,就不太好了, 第一次请求同一个接口时,将数据保存在redux中
+
+- 普通的做法
+  - category.js中引入 api/index.js中的请求reqCategoryList请求函数
+  - 在Category组件中的componentDidMount中调用组件实例方法this.getCategoryList()获取数据,然后更新状态state
+
+```js
+import { reqCategory } from '../../api'
+
+// ...
+getCategory = async () => {
+  let result = await reqCategoryList()
+  // 更新状态 setState
+}
+componentDidMount () {
+  this.getCategory()
+}
+
+```
+
+- 刻意练习一下 异步action, 调用api接口请求后端数据的函数封装在redux的actionCreator中, action是异步action
+- 同时, 调用完异步action后, 再调用同步的action去触发reducer去更新状态
+- 那么问题来了？为什么在此处使用异步action呢
+  - 1. 刻意练习
+  - 2. 因为产品分类在"分类","商品管理"等模块中同时使用,需要保存在redux进行共享数据,既然需要操作redux,那就一气呵成,把获取数据以及触发的action一起处理, 因为分类信息的获取是异步的, 此时就要使用异步action, redux-thunk
+

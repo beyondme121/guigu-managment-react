@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from 'react-redux'
-import { Layout, Button } from 'antd'
+import { Layout } from 'antd'
 import { reqCategorys } from '../../api'
 import { Switch, Route } from 'react-router-dom'
 import Header from "./header/header";

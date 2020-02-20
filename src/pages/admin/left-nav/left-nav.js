@@ -1,11 +1,17 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux'
 import { Menu, Icon } from 'antd';
 import { Link, withRouter } from 'react-router-dom';
 import menuConfig from '../../../config/menu-config';
+import { save_title } from '../../../redux/actions/menu-action'
 import logo from '../../../assets/images/ABB_Logo.png';
 import './left-nav.less';
 const { SubMenu, Item } = Menu;
 
+@connect(
+  state => ({}),
+  { save_title }
+)
 @withRouter
 class LeftNav extends Component {
   createMenu = list => {
@@ -13,7 +19,7 @@ class LeftNav extends Component {
       const { title, key, icon, path, children } = menu
       if (!children) {
         return (
-          <Item key={key}>
+          <Item key={key} onClick={() => this.props.save_title(title)}>
             <Link to={path}>
               <Icon type={icon} />
               <span>{title}</span>
@@ -49,7 +55,8 @@ class LeftNav extends Component {
           <h1>管理后台</h1>
         </div>
         <Menu
-          defaultSelectedKeys={[selectedKeys]}
+          // defaultSelectedKeys={[selectedKeys]}
+          selectedKeys={[selectedKeys]}
           defaultOpenKeys={openKeys}      // 接收数组, 接收多了也无妨
           mode="inline"
           theme="light"

@@ -20,4 +20,7 @@ export const reqWeatherData = city => {
 }
 
 // 请求商品分类数据
-export const reqCategorys = () => myAxios.get('/token/category/list')
+export const reqCategorys = () => myAxios.get('/categorys/list')
+
+// 添加商品分类: 参数category就是对象
+export const reqAddCategory = (category) => myAxios.post('/categorys/add', category)
